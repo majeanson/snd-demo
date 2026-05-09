@@ -24,14 +24,23 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      # Create the Pages project on the first run; idempotent on subsequent
+      # runs (we swallow the "already exists" error). Wrangler's `pages
+      # deploy` does NOT auto-create the project on this version (3.90).
+      - name: Ensure Pages project exists
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create snd-demo --production-branch=main
+        continue-on-error: true
+
       - id: deploy
         name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # First run with --branch=main auto-creates the snd-demo Pages
-          # project. Subsequent runs just deploy.
           command: pages deploy dist --project-name=snd-demo --branch=main
 
       - name: Print deploy URL
