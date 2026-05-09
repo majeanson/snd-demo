@@ -4,7 +4,7 @@ type Lang = 'fr' | 'en'
 
 const COPY = {
   fr: {
-    eyebrow: 'révision 01 · barebones',
+    eyebrow: 'barebones',
     nameLine1: 'Truck',
     nameLine2: 'Notes',
     tagline: 'Notes de truck → brouillon de facture le dimanche matin.',
@@ -12,10 +12,10 @@ const COPY = {
       'Démo en construction. À chaque révision, une nouvelle pièce du puzzle. Ici, c’est juste le nom — la suite arrive.',
     languageToggle: 'EN',
     footerLeft: 'Sunday Night Dread · démo extraite',
-    footerRight: 'révision 01 / 05',
+    footerRight: 'en construction',
   },
   en: {
-    eyebrow: 'rev 01 · barebones',
+    eyebrow: 'barebones',
     nameLine1: 'Truck',
     nameLine2: 'Notes',
     tagline: 'Truck voice notes → draft invoice by Sunday morning.',
@@ -23,7 +23,7 @@ const COPY = {
       'Demo under construction. Each revision adds another piece. This one is just the name — the rest is coming.',
     languageToggle: 'FR',
     footerLeft: 'Sunday Night Dread · extracted demo',
-    footerRight: 'revision 01 / 05',
+    footerRight: 'in progress',
   },
 } as const
 
