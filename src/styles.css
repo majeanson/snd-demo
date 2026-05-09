@@ -1,0 +1,127 @@
+/* Rev 01 — barebones home page. Warm cream paper + amber, intentionally
+   sparse so subsequent revisions feel like real iteration. */
+:root {
+  --bg: #fff8ec;
+  --text: #1a1a1a;
+  --text-soft: #6b6358;
+  --accent: #d97706;
+  --accent-soft: #fde9c8;
+  --border: #ead9b8;
+  --display: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Mono', 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--display);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 0.85em;
+}
+
+.page {
+  min-height: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 28px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.lang-toggle {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.lang-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.hero {
+  margin-top: 96px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.hero__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin: 0;
+}
+
+.hero__name {
+  margin: 0;
+  font-size: clamp(64px, 18vw, 144px);
+  line-height: 0.9;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero__name-line {
+  display: block;
+}
+.hero__name-line--accent {
+  color: var(--accent);
+}
+
+.hero__tagline {
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 500;
+  color: var(--text);
+  margin: 12px 0 0;
+  max-width: 30ch;
+}
+
+.hero__description {
+  color: var(--text-soft);
+  font-size: 16px;
+  margin: 0;
+  max-width: 56ch;
+}
+
+.page-footer {
+  margin-top: 64px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-soft);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
