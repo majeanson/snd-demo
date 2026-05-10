@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { parseTranscript, type Extracted } from './parse'
 
 export type Lang = 'fr' | 'en'
@@ -275,19 +275,24 @@ export function VoiceMemo({
         {memo.words.map((w, i) => {
           const visible = w.at <= elapsed
           const isLatest = visible && (i === memo.words.length - 1 || memo.words[i + 1].at > elapsed)
+          // Trailing space lives OUTSIDE the span as a sibling text node.
+          // Putting it inside `display: inline-block` spans makes browsers
+          // collapse the trailing whitespace, so the words ran together.
           return (
-            <span
-              key={i}
-              className={[
-                'memo__word',
-                visible ? 'memo__word--visible' : '',
-                isLatest && playing ? 'memo__word--latest' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {w.text}{' '}
-            </span>
+            <Fragment key={i}>
+              <span
+                className={[
+                  'memo__word',
+                  visible ? 'memo__word--visible' : '',
+                  isLatest && playing ? 'memo__word--latest' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {w.text}
+              </span>
+              {' '}
+            </Fragment>
           )
         })}
       </div>

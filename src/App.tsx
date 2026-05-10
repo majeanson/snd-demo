@@ -1,30 +1,34 @@
 import { useCallback, useEffect, useState } from 'react'
 import { VoiceMemo, type Lang } from './VoiceMemo'
 import { InvoiceDraft } from './InvoiceDraft'
+import { Topbar } from './Topbar'
+import { LoginModal } from './LoginModal'
 import { EMPTY_EXTRACTED, type Extracted } from './parse'
 
 const COPY = {
   fr: {
-    eyebrow: 'rev 04 · facture sans douleur',
+    eyebrow: 'rev 05 · prêt à expédier',
     nameLine1: 'Truck',
     nameLine2: 'Notes',
     tagline: 'Notes de truck → brouillon de facture le dimanche matin.',
     description:
-      'Cette révision : la note se transcrit, le parser extrait les données, et le brouillon de facture se construit en dessous. Taxes du Québec, totaux qui s’ajustent — manque juste à valider et envoyer.',
-    languageToggle: 'EN',
+      'Cette révision : la note vocale, le parser, et le brouillon de facture, tous polis. Connexion client en haut, métrique note→facture, et le tout prêt à embarquer dans un vrai produit.',
+    metricAssembling: 'Construction du brouillon en cours…',
+    metricReady: (sec: string) => `Note → facture · prête en ${sec} s`,
     footerLeft: 'Sunday Night Dread · démo extraite',
-    footerRight: 'rev 04 · brouillon vivant',
+    footerRight: 'rev 05 · prêt à expédier',
   },
   en: {
-    eyebrow: 'rev 04 · invoice without dread',
+    eyebrow: 'rev 05 · ship-ready',
     nameLine1: 'Truck',
     nameLine2: 'Notes',
     tagline: 'Truck voice notes → draft invoice by Sunday morning.',
     description:
-      'This revision: the note transcribes, the parser pulls out the data, and the invoice draft assembles below. Quebec taxes, totals updating live — only thing left is to review and send.',
-    languageToggle: 'FR',
+      'This revision: the voice note, the parser, and the invoice draft, all polished. Client sign-in up top, note→invoice timing metric, and everything ready to drop into a real product.',
+    metricAssembling: 'Assembling the draft…',
+    metricReady: (sec: string) => `Note → invoice · ready in ${sec} s`,
     footerLeft: 'Sunday Night Dread · extracted demo',
-    footerRight: 'rev 04 · live draft',
+    footerRight: 'rev 05 · ship-ready',
   },
 } as const
 
@@ -34,6 +38,14 @@ export function App() {
     return navigator.language.toLowerCase().startsWith('fr') ? 'fr' : 'en'
   })
   const [extracted, setExtracted] = useState<Extracted>(EMPTY_EXTRACTED)
+  const [loginOpen, setLoginOpen] = useState(false)
+
+  // Stopwatch from the parser's first hit to the moment the invoice is fully
+  // assembled (client + hours + ≥1 material). Both reset to null when the
+  // user replays from zero, so the metric naturally restarts each playthrough.
+  const [firstDetectionAt, setFirstDetectionAt] = useState<number | null>(null)
+  const [completionAt, setCompletionAt] = useState<number | null>(null)
+
   const t = COPY[lang]
 
   useEffect(() => {
@@ -41,9 +53,25 @@ export function App() {
     document.title = `${t.nameLine1} ${t.nameLine2} — ${t.tagline}`
   }, [lang, t])
 
-  // Stable identity so VoiceMemo's effect doesn't fire on every parent render.
   const handleExtracted = useCallback((next: Extracted) => {
     setExtracted(next)
+    const hasAny =
+      next.client !== null || next.hours !== null || next.materials.length > 0
+    const isComplete =
+      next.client !== null && next.hours !== null && next.materials.length >= 1
+    // Functional updaters keep deps empty — callback identity stays stable so
+    // VoiceMemo's effect doesn't re-fire on every parent render.
+    setFirstDetectionAt((prev) => {
+      if (!hasAny) return null
+      if (prev === null) return performance.now()
+      return prev
+    })
+    setCompletionAt((prev) => {
+      if (!hasAny) return null
+      if (isComplete && prev === null) return performance.now()
+      if (!isComplete) return null
+      return prev
+    })
   }, [])
 
   const hasAny =
@@ -51,16 +79,13 @@ export function App() {
 
   return (
     <main className="page">
-      <button
-        type="button"
-        className="lang-toggle mono"
-        onClick={() => setLang((l) => (l === 'fr' ? 'en' : 'fr'))}
-        aria-label={t.languageToggle}
-      >
-        {t.languageToggle}
-      </button>
+      <Topbar
+        lang={lang}
+        onLangSwitch={() => setLang((l) => (l === 'fr' ? 'en' : 'fr'))}
+        onLoginClick={() => setLoginOpen(true)}
+      />
 
-      <section className="hero">
+      <section id="main" className="hero">
         <p className="hero__eyebrow mono">{t.eyebrow}</p>
         <h1 className="hero__name">
           <span className="hero__name-line">{t.nameLine1}</span>
@@ -72,12 +97,67 @@ export function App() {
 
       <VoiceMemo lang={lang} onExtractedChange={handleExtracted} />
 
-      {hasAny && <InvoiceDraft lang={lang} extracted={extracted} />}
+      {hasAny && (
+        <>
+          <Metric
+            firstDetectionAt={firstDetectionAt}
+            completionAt={completionAt}
+            assemblingLabel={t.metricAssembling}
+            readyLabel={t.metricReady}
+            lang={lang}
+          />
+          <InvoiceDraft lang={lang} extracted={extracted} />
+        </>
+      )}
 
       <footer className="page-footer mono">
         <span>{t.footerLeft}</span>
         <span>{t.footerRight}</span>
       </footer>
+
+      {loginOpen && <LoginModal lang={lang} onClose={() => setLoginOpen(false)} />}
     </main>
+  )
+}
+
+/**
+ * Time-to-invoice chip. Renders nothing while the parser hasn't seen anything;
+ * shows "Assembling…" while incomplete; flips to a pinned "Ready in X s"
+ * value once the invoice has its essentials. Both states use only stable
+ * state, so render stays pure (no `performance.now()` in JSX).
+ */
+function Metric({
+  firstDetectionAt,
+  completionAt,
+  assemblingLabel,
+  readyLabel,
+  lang,
+}: {
+  firstDetectionAt: number | null
+  completionAt: number | null
+  assemblingLabel: string
+  readyLabel: (sec: string) => string
+  lang: Lang
+}) {
+  if (firstDetectionAt === null) return null
+
+  if (completionAt === null) {
+    return (
+      <div className="metric metric--pending" role="status" aria-live="polite">
+        <span className="metric__dot" aria-hidden="true" />
+        <span>{assemblingLabel}</span>
+      </div>
+    )
+  }
+
+  const sec = ((completionAt - firstDetectionAt) / 1000).toFixed(1)
+  const formatted = lang === 'fr' ? sec.replace('.', ',') : sec
+  return (
+    <div className="metric metric--ready" role="status" aria-live="polite">
+      <span className="metric__check" aria-hidden="true">
+        ✓
+      </span>
+      <span>{readyLabel(formatted)}</span>
+    </div>
   )
 }

@@ -76,6 +76,7 @@ interface InvoiceLabels {
   total: string
   terms: string
   send: string
+  download: string
   draftBadge: string
   emptyHint: string
 }
@@ -103,6 +104,7 @@ const LABELS: Record<Lang, InvoiceLabels> = {
     total: 'Total',
     terms: 'Modalités · payable sur 30 jours · intérêts 1,5 %/mois après échéance',
     send: 'Envoyer au client',
+    download: 'Télécharger PDF',
     draftBadge: 'brouillon — à valider avant envoi',
     emptyHint: 'Les lignes apparaissent à mesure qu’on capte les heures et les matériaux…',
   },
@@ -128,6 +130,7 @@ const LABELS: Record<Lang, InvoiceLabels> = {
     total: 'Total',
     terms: 'Terms · net 30 · 1.5%/mo interest after due date',
     send: 'Send to client',
+    download: 'Download PDF',
     draftBadge: 'draft — review before sending',
     emptyHint: 'Lines fill in as we catch the hours and materials…',
   },
@@ -300,12 +303,27 @@ export function InvoiceDraft({ extracted, lang }: { extracted: Extracted; lang: 
         <div className="invoice__send-wrap">
           <button
             type="button"
-            className="invoice__send"
+            className="invoice__btn invoice__btn--ghost"
+            disabled
+            aria-disabled="true"
+            title={labels.draftBadge}
+          >
+            <span className="invoice__btn-icon" aria-hidden="true">
+              ↓
+            </span>
+            {labels.download}
+          </button>
+          <button
+            type="button"
+            className="invoice__btn invoice__btn--primary"
             disabled
             aria-disabled="true"
             title={labels.draftBadge}
           >
             {labels.send}
+            <span className="invoice__btn-icon" aria-hidden="true">
+              →
+            </span>
           </button>
           <span className="invoice__send-badge mono">{labels.draftBadge}</span>
         </div>
