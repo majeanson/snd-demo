@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { parseTranscript } from './parse'
+import { parseTranscript, type Extracted } from './parse'
 
 export type Lang = 'fr' | 'en'
 
@@ -165,7 +165,15 @@ function countVisible(words: Word[], elapsed: number): number {
  * the precomputed `at` offsets. Honest demo: the point is the voice→text UX,
  * not actual audio decoding.
  */
-export function VoiceMemo({ lang }: { lang: Lang }) {
+export function VoiceMemo({
+  lang,
+  onExtractedChange,
+}: {
+  lang: Lang
+  /** Fires whenever the parser's view of the transcript changes. Lets a
+   * sibling (Rev 04: InvoiceDraft) react without owning the playback. */
+  onExtractedChange?: (extracted: Extracted) => void
+}) {
   const memo = MEMOS[lang]
   const [elapsed, setElapsed] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -216,6 +224,12 @@ export function VoiceMemo({ lang }: { lang: Lang }) {
       .join(' ')
     return parseTranscript(text, lang)
   }, [memo, visibleCount, lang])
+
+  // Mirror the parser's output to the parent so siblings can render off it.
+  // Effect keeps render pure; the parent gets one update per memoized change.
+  useEffect(() => {
+    onExtractedChange?.(extracted)
+  }, [extracted, onExtractedChange])
 
   const onToggle = () => {
     if (finished) {
