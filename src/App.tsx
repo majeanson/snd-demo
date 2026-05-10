@@ -1,29 +1,28 @@
 import { useEffect, useState } from 'react'
-
-type Lang = 'fr' | 'en'
+import { VoiceMemo, type Lang } from './VoiceMemo'
 
 const COPY = {
   fr: {
-    eyebrow: 'barebones',
+    eyebrow: 'rev 02 · note vocale',
     nameLine1: 'Truck',
     nameLine2: 'Notes',
     tagline: 'Notes de truck → brouillon de facture le dimanche matin.',
     description:
-      'Démo en construction. À chaque révision, une nouvelle pièce du puzzle. Ici, c’est juste le nom — la suite arrive.',
+      'Cette révision : on entend la note prise dans le truck, et le transcript se révèle à mesure. Prochaine étape — on va chercher les heures et les matériaux dedans.',
     languageToggle: 'EN',
     footerLeft: 'Sunday Night Dread · démo extraite',
-    footerRight: 'en construction',
+    footerRight: 'rev 02 · transcript live',
   },
   en: {
-    eyebrow: 'barebones',
+    eyebrow: 'rev 02 · voice note',
     nameLine1: 'Truck',
     nameLine2: 'Notes',
     tagline: 'Truck voice notes → draft invoice by Sunday morning.',
     description:
-      'Demo under construction. Each revision adds another piece. This one is just the name — the rest is coming.',
+      'This revision: hear the note taken in the truck, watch the transcript reveal itself. Next up — we pull hours and materials out of it.',
     languageToggle: 'FR',
     footerLeft: 'Sunday Night Dread · extracted demo',
-    footerRight: 'in progress',
+    footerRight: 'rev 02 · transcript live',
   },
 } as const
 
@@ -59,6 +58,8 @@ export function App() {
         <p className="hero__tagline">{t.tagline}</p>
         <p className="hero__description">{t.description}</p>
       </section>
+
+      <VoiceMemo lang={lang} />
 
       <footer className="page-footer mono">
         <span>{t.footerLeft}</span>

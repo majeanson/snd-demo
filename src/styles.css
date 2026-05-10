@@ -1,12 +1,18 @@
-/* Rev 01 — barebones home page. Warm cream paper + amber, intentionally
-   sparse so subsequent revisions feel like real iteration. */
+/* Rev 02 — voice note + transcript reveal. Hero shrinks to make room for the
+   memo card. Warm cream paper + amber stays; we add a "voice paper" card with
+   a tape-deck progress bar and a transcript that fades in word by word. */
 :root {
   --bg: #fff8ec;
+  --bg-card: #fffdf6;
   --text: #1a1a1a;
   --text-soft: #6b6358;
+  --text-mute: #b1a18a;
   --accent: #d97706;
   --accent-soft: #fde9c8;
+  --accent-warm: #fbbf24;
   --border: #ead9b8;
+  --border-soft: #f1e3c4;
+  --shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 14px 32px -22px rgba(120, 80, 0, 0.18);
   --display: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Mono', 'JetBrains Mono', 'Fira Code', monospace;
 }
@@ -46,7 +52,7 @@ body {
   padding: 48px 28px 32px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 36px;
   position: relative;
 }
 
@@ -69,11 +75,10 @@ body {
 }
 
 .hero {
-  margin-top: 96px;
-  flex: 1 1 auto;
+  margin-top: 56px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 .hero__eyebrow {
@@ -85,10 +90,10 @@ body {
 
 .hero__name {
   margin: 0;
-  font-size: clamp(64px, 18vw, 144px);
-  line-height: 0.9;
+  font-size: clamp(44px, 9vw, 84px);
+  line-height: 0.95;
   font-weight: 800;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.035em;
   display: flex;
   flex-direction: column;
 }
@@ -101,22 +106,165 @@ body {
 }
 
 .hero__tagline {
-  font-size: clamp(20px, 3vw, 26px);
+  font-size: clamp(18px, 2.4vw, 22px);
   font-weight: 500;
   color: var(--text);
-  margin: 12px 0 0;
-  max-width: 30ch;
+  margin: 8px 0 0;
+  max-width: 36ch;
 }
 
 .hero__description {
   color: var(--text-soft);
-  font-size: 16px;
+  font-size: 15.5px;
   margin: 0;
   max-width: 56ch;
 }
 
+/* Voice memo card */
+.memo {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px 22px 24px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.memo::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-warm) 60%, transparent 100%);
+  opacity: 0.7;
+}
+
+.memo__head {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.memo__stamp {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+.memo__loc {
+  color: var(--text-soft);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.memo__player {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.memo__play {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+.memo__play:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px -10px rgba(217, 119, 6, 0.6);
+}
+.memo__play[aria-pressed='true'] {
+  background: #b35d04;
+}
+.memo__play-icon {
+  display: inline-block;
+  line-height: 1;
+  /* Pull the play triangle a hair right so it looks centered. */
+  transform: translateX(1px);
+}
+.memo__play[aria-pressed='true'] .memo__play-icon {
+  transform: none;
+  letter-spacing: -0.18em;
+  font-size: 13px;
+}
+
+.memo__bar {
+  flex: 1 1 auto;
+  height: 6px;
+  background: var(--accent-soft);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+.memo__bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-warm) 100%);
+  border-radius: inherit;
+  transition: width 80ms linear;
+}
+
+.memo__clock {
+  flex: 0 0 auto;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  min-width: 84px;
+  text-align: right;
+}
+.memo__clock-sep {
+  color: var(--text-mute);
+  margin: 0 2px;
+}
+
+.memo__hint {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.memo__transcript {
+  background: linear-gradient(180deg, transparent 0%, rgba(253, 233, 200, 0.25) 100%);
+  border-top: 1px dashed var(--border-soft);
+  margin: 4px -22px -24px;
+  padding: 22px 24px 26px;
+  font-size: 18px;
+  line-height: 1.55;
+  min-height: 96px;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+
+.memo__word {
+  opacity: 0;
+  transform: translateY(2px);
+  display: inline-block;
+  transition: opacity 220ms ease, transform 220ms ease, color 220ms ease;
+  color: var(--text-soft);
+}
+.memo__word--visible {
+  opacity: 1;
+  transform: none;
+  color: var(--text);
+}
+.memo__word--latest {
+  color: var(--accent);
+}
+
 .page-footer {
-  margin-top: 64px;
+  margin-top: auto;
   padding-top: 18px;
   border-top: 1px dashed var(--border);
   display: flex;
@@ -124,4 +272,11 @@ body {
   color: var(--text-soft);
   font-size: 12px;
   letter-spacing: 0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .memo__bar-fill,
+  .memo__word {
+    transition: none;
+  }
 }
