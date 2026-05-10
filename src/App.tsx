@@ -3,26 +3,26 @@ import { VoiceMemo, type Lang } from './VoiceMemo'
 
 const COPY = {
   fr: {
-    eyebrow: 'rev 02 · note vocale',
+    eyebrow: 'rev 03 · on extrait',
     nameLine1: 'Truck',
     nameLine2: 'Notes',
     tagline: 'Notes de truck → brouillon de facture le dimanche matin.',
     description:
-      'Cette révision : on entend la note prise dans le truck, et le transcript se révèle à mesure. Prochaine étape — on va chercher les heures et les matériaux dedans.',
+      'Cette révision : pendant que la note se transcrit, on capte le client, les heures et les matériaux. Prochaine étape — un brouillon de facture rempli tout seul.',
     languageToggle: 'EN',
     footerLeft: 'Sunday Night Dread · démo extraite',
-    footerRight: 'rev 02 · transcript live',
+    footerRight: 'rev 03 · parser live',
   },
   en: {
-    eyebrow: 'rev 02 · voice note',
+    eyebrow: 'rev 03 · we extract',
     nameLine1: 'Truck',
     nameLine2: 'Notes',
     tagline: 'Truck voice notes → draft invoice by Sunday morning.',
     description:
-      'This revision: hear the note taken in the truck, watch the transcript reveal itself. Next up — we pull hours and materials out of it.',
+      'This revision: while the note transcribes, we pull out the client, the hours, and the materials. Next up — an invoice draft that fills itself in.',
     languageToggle: 'FR',
     footerLeft: 'Sunday Night Dread · extracted demo',
-    footerRight: 'rev 02 · transcript live',
+    footerRight: 'rev 03 · parser live',
   },
 } as const
 

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { parseTranscript } from './parse'
 
 export type Lang = 'fr' | 'en'
 
@@ -9,6 +10,12 @@ interface MemoLabels {
   play: string
   pause: string
   replay: string
+  caughtTitle: string
+  clientLabel: string
+  hoursLabel: string
+  materialsLabel: string
+  hoursUnit: (n: number) => string
+  pending: string
 }
 
 /**
@@ -100,10 +107,16 @@ const MEMOS: Record<Lang, Memo> = {
     labels: {
       stamp: 'jeu. 14 h 32',
       location: 'sur la 138 vers Tadoussac',
-      hint: 'Note vocale prise dans le truck. Joue pour voir le transcript.',
+      hint: 'Note vocale prise dans le truck. Joue pour voir ce qu’on en tire.',
       play: 'écouter',
       pause: 'pause',
       replay: 'rejouer',
+      caughtTitle: 'Ce qu’on a capté',
+      clientLabel: 'Client',
+      hoursLabel: 'Heures',
+      materialsLabel: 'Matériaux',
+      hoursUnit: (n) => `${formatNumber(n, 'fr')} h`,
+      pending: '—',
     },
   },
   en: {
@@ -112,12 +125,23 @@ const MEMOS: Record<Lang, Memo> = {
     labels: {
       stamp: 'thu 2:32 pm',
       location: 'on the 138 toward Tadoussac',
-      hint: 'Voice note recorded in the truck. Press play to see the transcript.',
+      hint: 'Voice note recorded in the truck. Press play to watch what we pull out.',
       play: 'play',
       pause: 'pause',
       replay: 'replay',
+      caughtTitle: 'What we caught',
+      clientLabel: 'Client',
+      hoursLabel: 'Hours',
+      materialsLabel: 'Materials',
+      hoursUnit: (n) => `${formatNumber(n, 'en')} h`,
+      pending: '—',
     },
   },
+}
+
+function formatNumber(n: number, lang: Lang): string {
+  if (Number.isInteger(n)) return String(n)
+  return lang === 'fr' ? n.toString().replace('.', ',') : n.toString()
 }
 
 function formatClock(ms: number): string {
@@ -125,6 +149,14 @@ function formatClock(ms: number): string {
   const m = Math.floor(total / 60)
   const s = total % 60
   return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function countVisible(words: Word[], elapsed: number): number {
+  // Words are ordered by `at`, so the first one past elapsed is the boundary.
+  for (let i = 0; i < words.length; i++) {
+    if (words[i].at > elapsed) return i
+  }
+  return words.length
 }
 
 /**
@@ -172,6 +204,18 @@ export function VoiceMemo({ lang }: { lang: Lang }) {
 
   const finished = elapsed >= memo.duration
   const progress = Math.min(1, elapsed / memo.duration)
+
+  // Count of words spoken so far. Recomputed every frame, but cheap (n=23) and
+  // it's the cache key for the parser so the regex pass only runs when a new
+  // word appears, not on every animation tick.
+  const visibleCount = countVisible(memo.words, elapsed)
+  const extracted = useMemo(() => {
+    const text = memo.words
+      .slice(0, visibleCount)
+      .map((w) => w.text)
+      .join(' ')
+    return parseTranscript(text, lang)
+  }, [memo, visibleCount, lang])
 
   const onToggle = () => {
     if (finished) {
@@ -233,6 +277,48 @@ export function VoiceMemo({ lang }: { lang: Lang }) {
           )
         })}
       </div>
+
+      <aside className="caught" aria-label={memo.labels.caughtTitle}>
+        <header className="caught__head">
+          <span className="caught__eyebrow mono">{memo.labels.caughtTitle}</span>
+        </header>
+        <dl className="caught__list">
+          <div className="caught__row">
+            <dt className="caught__label mono">{memo.labels.clientLabel}</dt>
+            {/* `key` on the value forces React to mount a fresh node when the
+                detected value flips, which retriggers the fade-in animation. */}
+            <dd className="caught__value" key={extracted.client ?? '__none'}>
+              {extracted.client ?? <span className="caught__pending">{memo.labels.pending}</span>}
+            </dd>
+          </div>
+          <div className="caught__row">
+            <dt className="caught__label mono">{memo.labels.hoursLabel}</dt>
+            <dd className="caught__value" key={extracted.hours ?? '__none'}>
+              {extracted.hours != null ? (
+                memo.labels.hoursUnit(extracted.hours)
+              ) : (
+                <span className="caught__pending">{memo.labels.pending}</span>
+              )}
+            </dd>
+          </div>
+          <div className="caught__row caught__row--multi">
+            <dt className="caught__label mono">{memo.labels.materialsLabel}</dt>
+            <dd className="caught__value">
+              {extracted.materials.length > 0 ? (
+                <ul className="caught__materials">
+                  {extracted.materials.map((m) => (
+                    <li key={m} className="caught__material">
+                      {m}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <span className="caught__pending">{memo.labels.pending}</span>
+              )}
+            </dd>
+          </div>
+        </dl>
+      </aside>
     </section>
   )
 }
