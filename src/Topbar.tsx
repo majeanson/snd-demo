@@ -4,7 +4,6 @@ interface TopbarLabels {
   brandName: string
   brandTagline: string
   langSwitch: string
-  pricing: string
   login: string
 }
 
@@ -13,14 +12,12 @@ const LABELS: Record<Lang, TopbarLabels> = {
     brandName: 'Truck Notes',
     brandTagline: 'Notes → factures',
     langSwitch: 'EN',
-    pricing: 'Tarifs',
     login: 'Connexion',
   },
   en: {
     brandName: 'Truck Notes',
     brandTagline: 'Notes → invoices',
     langSwitch: 'FR',
-    pricing: 'Pricing',
     login: 'Sign in',
   },
 }
@@ -64,9 +61,6 @@ export function Topbar({
       </a>
 
       <nav className="topnav" aria-label="primary">
-        <a className="topnav__link mono" href="#pricing" tabIndex={-1} aria-disabled="true" onClick={(e) => e.preventDefault()}>
-          {t.pricing}
-        </a>
         <button
           type="button"
           className="topnav__lang mono"

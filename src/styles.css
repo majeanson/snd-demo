@@ -110,15 +110,6 @@ body {
   align-items: center;
   gap: 8px;
 }
-.topnav__link {
-  color: var(--text-soft);
-  text-decoration: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: default;
-  opacity: 0.6;
-}
 .topnav__lang {
   background: transparent;
   border: 1px solid var(--border);
@@ -158,9 +149,6 @@ body {
   .brand__tagline {
     display: none;
   }
-  .topnav__link {
-    display: none;
-  }
 }
 
 .hero {
@@ -175,6 +163,7 @@ body {
   letter-spacing: 0.12em;
   color: var(--accent);
   margin: 0;
+  animation: hero-rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .hero__name {
@@ -185,6 +174,7 @@ body {
   letter-spacing: -0.035em;
   display: flex;
   flex-direction: column;
+  animation: hero-rise 600ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both;
 }
 
 .hero__name-line {
@@ -200,6 +190,7 @@ body {
   color: var(--text);
   margin: 8px 0 0;
   max-width: 36ch;
+  animation: hero-rise 600ms cubic-bezier(0.2, 0.8, 0.2, 1) 200ms both;
 }
 
 .hero__description {
@@ -207,6 +198,18 @@ body {
   font-size: 15.5px;
   margin: 0;
   max-width: 56ch;
+  animation: hero-rise 600ms cubic-bezier(0.2, 0.8, 0.2, 1) 320ms both;
+}
+
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* Voice memo card */
@@ -289,6 +292,111 @@ body {
   font-size: 13px;
 }
 
+/* Input-source toggle (sample vs your voice) */
+.memo__mode {
+  display: inline-flex;
+  align-self: flex-start;
+  background: rgba(217, 119, 6, 0.08);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+  font-size: 13px;
+}
+.memo__mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: transparent;
+  border: 0;
+  color: var(--text-soft);
+  cursor: pointer;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.005em;
+  transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+.memo__mode-btn:hover {
+  color: var(--text);
+}
+.memo__mode-btn--active {
+  background: var(--bg-card);
+  color: var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 1px var(--border);
+}
+.memo__mode-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+.memo__mode-dot--live {
+  background: #c33;
+  box-shadow: 0 0 0 2px rgba(204, 51, 51, 0.15);
+}
+.memo__mode-btn--live.memo__mode-btn--active .memo__mode-dot--live {
+  /* Subtle pulse so live mode reads as "this is real-time" — only on the
+     active live tab to avoid distracting from sample mode. */
+  animation: mode-live-pulse 1.8s ease-in-out infinite;
+}
+.memo__mode-badge {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  padding: 1px 6px;
+  margin-left: 4px;
+}
+@keyframes mode-live-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 2px rgba(204, 51, 51, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(204, 51, 51, 0.05);
+  }
+}
+
+.memo__eq {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+  height: 24px;
+  width: 26px;
+  flex: 0 0 auto;
+}
+.memo__eq-bar {
+  display: inline-block;
+  width: 3px;
+  height: 4px;
+  border-radius: 1.5px;
+  background: var(--accent);
+  opacity: 0.45;
+  transition: height 220ms ease, opacity 220ms ease;
+}
+.memo__eq--playing .memo__eq-bar {
+  opacity: 1;
+  animation: memo-eq 800ms ease-in-out infinite;
+}
+.memo__eq--playing .memo__eq-bar:nth-child(1) { animation-delay: 0ms; }
+.memo__eq--playing .memo__eq-bar:nth-child(2) { animation-delay: 140ms; }
+.memo__eq--playing .memo__eq-bar:nth-child(3) { animation-delay: 80ms; }
+.memo__eq--playing .memo__eq-bar:nth-child(4) { animation-delay: 220ms; }
+@keyframes memo-eq {
+  0%, 100% { height: 4px; }
+  35% { height: 18px; }
+  60% { height: 9px; }
+  80% { height: 14px; }
+}
+
 .memo__bar {
   flex: 1 1 auto;
   height: 6px;
@@ -317,11 +425,52 @@ body {
   margin: 0 2px;
 }
 
+.memo__hint-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 .memo__hint {
   margin: 0;
   color: var(--text-soft);
   font-size: 14px;
   font-style: italic;
+}
+.memo__shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-mute);
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex: 0 0 auto;
+}
+.memo__kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--bg);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--text-soft);
+  text-transform: lowercase;
+}
+.memo__shortcut-label {
+  font-weight: 600;
+}
+@media (max-width: 480px) {
+  .memo__shortcut {
+    display: none;
+  }
 }
 
 .memo__transcript {
@@ -340,6 +489,9 @@ body {
   opacity: 0;
   transform: translateY(2px);
   display: inline-block;
+  /* Explicit spacing — inline-block collapses adjacent whitespace text nodes,
+     so we render spans with no text-node spaces and enforce the gap here. */
+  margin-right: 0.28em;
   transition: opacity 220ms ease, transform 220ms ease, color 220ms ease;
   color: var(--text-soft);
 }
@@ -350,6 +502,621 @@ body {
 }
 .memo__word--latest {
   color: var(--accent);
+}
+
+/* ─── Live recorder (your-voice mode) ──────────────────────────────────── */
+.live {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: live-fade-in 280ms ease both;
+}
+@keyframes live-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.live__mic-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.live__mic {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 200ms ease;
+  box-shadow: 0 10px 24px -14px rgba(217, 119, 6, 0.6);
+}
+.live__mic:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px -16px rgba(217, 119, 6, 0.75);
+}
+.live__mic:active {
+  transform: none;
+}
+.live__mic--on {
+  background: #c33;
+  box-shadow: 0 10px 24px -14px rgba(204, 51, 51, 0.7);
+}
+.live__mic--on:hover {
+  background: #a02828;
+}
+.live__mic--error {
+  background: var(--text-mute);
+  cursor: pointer;
+  box-shadow: none;
+}
+.live__mic--error:hover {
+  background: var(--text-soft);
+}
+.live__mic--disabled {
+  background: var(--text-mute);
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.7;
+}
+.live__mic--disabled:hover {
+  transform: none;
+}
+.live__mic-icon {
+  display: inline-flex;
+  position: relative;
+  z-index: 1;
+}
+/* Concentric pulse rings — visible only while listening. Two rings on
+   staggered animation timing give a continuous ripple. */
+.live__mic-rings {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 240ms ease;
+}
+.live__mic--on .live__mic-rings {
+  opacity: 1;
+}
+.live__mic-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #c33;
+  animation: live-ring-pulse 1.7s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+}
+.live__mic-ring:nth-child(2) {
+  animation-delay: 0.85s;
+}
+@keyframes live-ring-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+.live__status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.live__status-label {
+  font-weight: 700;
+  font-size: 15.5px;
+  color: var(--text);
+}
+.live__coaching {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text-soft);
+  font-size: 13px;
+}
+.live__coaching-prefix {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  color: var(--text-mute);
+  font-weight: 600;
+}
+.live__coaching-example {
+  font-style: italic;
+  line-height: 1.45;
+}
+
+/* Recipe card — guides users to the canonical phrasings the parser knows.
+   Each row flips from "pending" (○ + examples) to "caught" (✓ + value)
+   based on the parsed Extracted state. */
+.recipe {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px 14px;
+  background: rgba(253, 233, 200, 0.35);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+.recipe__head {
+  margin: 0;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-mute);
+  font-weight: 700;
+}
+.recipe__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.recipe__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+  font-size: 13px;
+  line-height: 1.45;
+  transition: background 200ms ease, border-color 200ms ease;
+}
+.recipe__status {
+  flex: 0 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-mute);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  transition: background 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+.recipe__row--caught {
+  background: rgba(34, 139, 34, 0.06);
+  border-color: rgba(34, 139, 34, 0.22);
+}
+.recipe__row--caught .recipe__status {
+  background: #1f7a3a;
+  color: #fff;
+  border-color: #1f7a3a;
+}
+.recipe__label {
+  flex: 0 0 78px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+.recipe__examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.recipe__example {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.recipe__caught {
+  flex: 1 1 auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: #1f7a3a;
+  font-weight: 600;
+  animation: recipe-caught-in 280ms ease both;
+}
+@keyframes recipe-caught-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Per-kind accent dots on the status circle when pending */
+.recipe__row--client .recipe__status,
+.recipe__row--hours .recipe__status,
+.recipe__row--material .recipe__status {
+  /* base style already set above */
+}
+
+/* Error block */
+.live__error {
+  background: rgba(193, 17, 17, 0.05);
+  border: 1px solid rgba(193, 17, 17, 0.22);
+  color: #5a1818;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: live-fade-in 220ms ease both;
+}
+.live__error-msg {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.live__error-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--bg);
+  padding: 6px 10px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+.live__retry {
+  align-self: flex-start;
+  background: var(--text);
+  color: var(--bg);
+  border: 0;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  font-family: var(--display);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.live__retry:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, 0.3);
+}
+
+/* Live transcript — interim text in soft grey italics, finals in normal */
+.live__transcript {
+  background: linear-gradient(180deg, transparent 0%, rgba(253, 233, 200, 0.25) 100%);
+  border-top: 1px dashed var(--border-soft);
+  margin: 0 -22px;
+  padding: 20px 24px 22px;
+  font-size: 17.5px;
+  line-height: 1.55;
+  min-height: 88px;
+  color: var(--text);
+  letter-spacing: -0.005em;
+}
+.live__final {
+  color: var(--text);
+}
+
+/* Highlighted phrases — color-coded by parser slot so users see which words
+   triggered which field. Subtle backgrounds, no border, slight rounding. */
+.live__mark {
+  background: var(--accent-soft);
+  color: var(--text);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 currentColor;
+  animation: live-mark-in 220ms ease both;
+}
+.live__mark--client {
+  background: rgba(155, 89, 182, 0.18);
+  color: #6b3a8c;
+}
+.live__mark--hours {
+  background: rgba(217, 119, 6, 0.18);
+  color: #b35d04;
+}
+.live__mark--material {
+  background: rgba(34, 139, 34, 0.16);
+  color: #1f7a3a;
+}
+@keyframes live-mark-in {
+  from {
+    background-color: rgba(255, 235, 130, 0.5);
+  }
+  to {
+    background-color: var(--final-bg, transparent);
+  }
+}
+
+.live__interim {
+  color: var(--text-soft);
+  font-style: italic;
+  opacity: 0.75;
+}
+.live__placeholder {
+  color: var(--text-mute);
+  font-style: italic;
+  font-size: 15px;
+}
+
+/* Disclosure — two-line "demo/prod" labelled chip block */
+.live__disclosure {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+.live__disclosure-line {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.live__disclosure-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.live__disclosure-text {
+  margin: 0;
+}
+.live__disclosure-tag {
+  flex: 0 0 auto;
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--border);
+  min-width: 42px;
+  text-align: center;
+  margin-top: 1px;
+}
+.live__disclosure-tag--prod {
+  color: var(--text);
+  background: var(--bg-card);
+  border-color: var(--border);
+}
+.live__disclosure-line--prod {
+  color: var(--text);
+}
+.live__disclosure-stat {
+  margin: 4px 0 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* Vocab — collapsible "everything the demo recognizes" list under [demo] */
+.vocab {
+  margin: 0;
+  border-top: 1px dashed var(--border-soft);
+  padding-top: 8px;
+}
+.vocab__summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  user-select: none;
+  padding: 2px 0;
+}
+.vocab__summary::-webkit-details-marker {
+  display: none;
+}
+.vocab__summary::before {
+  content: '▸';
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 160ms ease;
+}
+.vocab[open] > .vocab__summary::before {
+  transform: rotate(90deg);
+}
+.vocab[open] > .vocab__summary {
+  color: var(--text);
+}
+.vocab__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0 4px;
+  animation: vocab-open 220ms ease both;
+}
+@keyframes vocab-open {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.vocab__group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-soft);
+}
+.vocab__kind-label {
+  margin: 0 0 2px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--text-mute);
+}
+.vocab__group--client .vocab__kind-label {
+  color: #6b3a8c;
+}
+.vocab__group--hours .vocab__kind-label {
+  color: #b35d04;
+}
+.vocab__group--material .vocab__kind-label {
+  color: #1f7a3a;
+}
+.vocab__sections {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vocab__section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+.vocab__sub {
+  flex: 0 0 auto;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  font-weight: 700;
+  padding: 0 6px 0 0;
+  border-right: 1px solid var(--border-soft);
+  margin-right: 2px;
+}
+.vocab__phrases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 4px;
+}
+.vocab__phrase {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.vocab__note {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-soft);
+  padding: 8px 10px;
+  background: rgba(217, 119, 6, 0.06);
+  border-left: 2px solid var(--accent);
+  border-radius: 4px;
+}
+
+/* Prod example — quoted natural-speech ramble inside [prod] */
+.prod-example {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  background: rgba(34, 139, 34, 0.05);
+  border-left: 2px solid #1f7a3a;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.prod-example__lead {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #1f7a3a;
+  font-weight: 700;
+}
+.prod-example__quote {
+  margin: 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.5;
+}
+.prod-example__tail {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
+@media (max-width: 520px) {
+  .live__mic-row {
+    gap: 14px;
+  }
+  .live__mic {
+    width: 64px;
+    height: 64px;
+  }
+  .live__transcript {
+    font-size: 16px;
+  }
+  .recipe__row {
+    flex-wrap: wrap;
+  }
+  .recipe__label {
+    flex-basis: auto;
+  }
+  .recipe__examples {
+    flex-basis: 100%;
+    margin-left: 28px;
+  }
+  .vocab__section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .vocab__sub {
+    border-right: 0;
+    padding: 0;
+  }
 }
 
 /* Caught panel — extracted fields as they're parsed live */
@@ -558,6 +1325,70 @@ body {
   transform: rotate(-1.5deg);
   align-self: flex-start;
   background: rgba(253, 233, 200, 0.4);
+  position: relative;
+}
+
+/* Sparkle burst — fires on the "complete" transition (client + hours +
+   1+ material). Four dots eased outward from the stamp, fade to nothing.
+   Pure decoration, ~700ms, then aria-hidden so it never disturbs SR users. */
+.invoice__sparkle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.invoice__sparkle-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-warm);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.7);
+  opacity: 0;
+  animation: invoice-spark 720ms cubic-bezier(0.2, 0.8, 0.4, 1) forwards;
+}
+.invoice__sparkle-dot--a {
+  --sx: 36px;
+  --sy: -20px;
+  animation-delay: 0ms;
+}
+.invoice__sparkle-dot--b {
+  --sx: -32px;
+  --sy: -22px;
+  animation-delay: 80ms;
+  background: var(--accent);
+}
+.invoice__sparkle-dot--c {
+  --sx: 28px;
+  --sy: 24px;
+  animation-delay: 40ms;
+}
+.invoice__sparkle-dot--d {
+  --sx: -30px;
+  --sy: 22px;
+  animation-delay: 120ms;
+  background: var(--accent);
+}
+@keyframes invoice-spark {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(0.6);
+  }
+}
+
+/* Once complete, the stamp gets a subtle warm glow so the sparkle has
+   somewhere to land — even after the dots fade, the moment lingers. */
+.invoice--complete .invoice__stamp {
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.15), 0 6px 22px -10px rgba(217, 119, 6, 0.45);
+  transition: box-shadow 320ms ease;
 }
 .invoice__date {
   margin: 0;
@@ -759,6 +1590,86 @@ body {
   color: var(--text-soft);
   opacity: 0.7;
 }
+
+/* "Live" — once the invoice has client + hours + 1 material, the buttons
+   activate: full opacity, real cursor, hover lift. */
+.invoice__btn--live {
+  cursor: pointer;
+  opacity: 1;
+}
+.invoice__btn--live.invoice__btn--primary:hover {
+  background: #b35d04;
+  border-color: #b35d04;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px -14px rgba(217, 119, 6, 0.65);
+}
+.invoice__btn--live.invoice__btn--ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.invoice__btn--live:active {
+  transform: none;
+}
+.invoice__btn:disabled {
+  cursor: not-allowed;
+}
+
+.invoice__btn-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  animation: invoice-spin 700ms linear infinite;
+}
+@keyframes invoice-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sent confirmation — replaces the Send button after the fake round-trip.
+   Same visual weight as a button so the layout doesn't jump. */
+.invoice__sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+  font-family: var(--display);
+  background: rgba(34, 139, 34, 0.08);
+  color: #1f7a3a;
+  border: 1px solid rgba(34, 139, 34, 0.3);
+  animation: invoice-sent-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.invoice__sent-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1f7a3a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+@keyframes invoice-sent-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .invoice__send-badge {
   font-size: 11px;
   color: var(--text-mute);
@@ -791,13 +1702,62 @@ body {
   }
   .invoice__foot {
     flex-direction: column;
+    align-items: stretch;
+  }
+  .invoice__send-wrap {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .invoice__btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+  .invoice__send-badge {
+    flex-basis: 100%;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+  .invoice__sent {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+  .invoice-recap {
+    flex-direction: column;
     align-items: flex-start;
+    gap: 6px;
+  }
+  .invoice-recap__tail {
+    margin-left: 0;
   }
 }
 
-/* Note → facture timing chip */
+/* Note → facture timing chip + "time saved" subline */
+.metric-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: -8px;
+}
+.metric__saved {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-soft);
+  font-style: italic;
+  padding-left: 14px;
+  animation: metric-saved-in 360ms ease both 220ms;
+}
+@keyframes metric-saved-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 .metric {
-  align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -806,7 +1766,6 @@ body {
   font-size: 13px;
   font-family: var(--mono);
   letter-spacing: 0.01em;
-  margin-bottom: -8px;
   animation: metric-in 280ms ease both;
 }
 .metric--pending {
@@ -1069,6 +2028,55 @@ body {
   }
 }
 
+/* Post-send recap — closes the demo loop. Sits OUTSIDE the invoice article
+   so it doesn't print and doesn't disturb the paper-like invoice card. */
+.invoice-recap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: -12px 4px 0;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text-soft);
+  background: rgba(34, 139, 34, 0.06);
+  border: 1px dashed rgba(34, 139, 34, 0.3);
+  border-radius: 10px;
+  animation: invoice-recap-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both 240ms;
+}
+.invoice-recap__label {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: #1f7a3a;
+  font-size: 11px;
+}
+.invoice-recap__items {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  color: var(--text);
+}
+.invoice-recap__items > span[aria-hidden="true"] {
+  color: var(--text-mute);
+}
+.invoice-recap__tail {
+  margin-left: auto;
+  color: var(--text-soft);
+  font-style: italic;
+}
+@keyframes invoice-recap-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .page-footer {
   margin-top: auto;
   padding-top: 18px;
@@ -1091,6 +2099,8 @@ body {
   .hero,
   .memo,
   .metric,
+  .metric-wrap,
+  .invoice-recap,
   .page-footer,
   .modal {
     display: none !important;
@@ -1106,27 +2116,48 @@ body {
     animation: none;
   }
   .invoice__btn,
-  .invoice__send-badge {
+  .invoice__send-badge,
+  .invoice__sent,
+  .invoice__sparkle {
     display: none !important;
   }
   .invoice__perforation {
     display: none;
   }
+  .invoice__stamp {
+    box-shadow: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .memo__bar-fill,
+  .memo__eq-bar,
   .memo__word,
+  .memo__mode-dot--live,
+  .live__mic-ring,
+  .live,
+  .live__error,
+  .live__mark,
+  .recipe__caught,
+  .vocab__body,
+  .vocab__summary::before,
   .caught__row,
   .caught__value,
   .caught__material,
   .invoice,
   .invoice__line,
   .invoice__party-name,
+  .invoice__sparkle-dot,
+  .invoice__sent,
+  .invoice__btn-spinner,
   .metric,
   .metric__dot,
   .modal__backdrop,
-  .modal__panel {
+  .modal__panel,
+  .hero__name,
+  .hero__tagline,
+  .hero__description,
+  .hero__eyebrow {
     transition: none;
     animation: none;
   }

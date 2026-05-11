@@ -1,7 +1,15 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { parseTranscript, type Extracted } from './parse'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { LiveRecorder } from './LiveRecorder'
+import { MATERIAL_DISPLAY, parseTranscript, type Extracted } from './parse'
+import { useSpeechRecognition, type SpeechLang } from './useSpeechRecognition'
 
 export type Lang = 'fr' | 'en'
+
+export type Mode = 'sample' | 'live'
+
+function toSpeechLang(lang: Lang): SpeechLang {
+  return lang === 'fr' ? 'fr-CA' : 'en-CA'
+}
 
 interface MemoLabels {
   stamp: string
@@ -16,6 +24,10 @@ interface MemoLabels {
   materialsLabel: string
   hoursUnit: (n: number) => string
   pending: string
+  shortcutHint: string
+  modeSample: string
+  modeLive: string
+  modeLiveUnsupportedBadge: string
 }
 
 /**
@@ -117,6 +129,10 @@ const MEMOS: Record<Lang, Memo> = {
       materialsLabel: 'Matériaux',
       hoursUnit: (n) => `${formatNumber(n, 'fr')} h`,
       pending: '—',
+      shortcutHint: 'lecture/pause',
+      modeSample: 'Échantillon',
+      modeLive: 'Ta voix',
+      modeLiveUnsupportedBadge: 'non pris en charge',
     },
   },
   en: {
@@ -135,6 +151,10 @@ const MEMOS: Record<Lang, Memo> = {
       materialsLabel: 'Materials',
       hoursUnit: (n) => `${formatNumber(n, 'en')} h`,
       pending: '—',
+      shortcutHint: 'play/pause',
+      modeSample: 'Sample',
+      modeLive: 'Your voice',
+      modeLiveUnsupportedBadge: 'unsupported',
     },
   },
 }
@@ -160,10 +180,14 @@ function countVisible(words: Word[], elapsed: number): number {
 }
 
 /**
- * Simulated voice memo player. No real audio — the playback time is driven by
- * a requestAnimationFrame loop, and the transcript reveals word-by-word using
- * the precomputed `at` offsets. Honest demo: the point is the voice→text UX,
- * not actual audio decoding.
+ * Voice memo widget — two modes:
+ *  - `sample`: prerecorded script revealed word-by-word via a rAF loop. The
+ *    point of the demo is the voice→text UX, not real audio decoding.
+ *  - `live`: streams the browser's `SpeechRecognition` output into the same
+ *    parser, so users can try their own voice. See `LiveRecorder.tsx`.
+ *
+ * Both modes feed a single parsed `Extracted` value up to the parent — the
+ * invoice draft and metric chip don't care which source the text came from.
  */
 export function VoiceMemo({
   lang,
@@ -175,11 +199,17 @@ export function VoiceMemo({
   onExtractedChange?: (extracted: Extracted) => void
 }) {
   const memo = MEMOS[lang]
+  const [mode, setMode] = useState<Mode>('sample')
+
+  // === Sample-mode state ================================================
   const [elapsed, setElapsed] = useState(0)
   const [playing, setPlaying] = useState(false)
   // Track playback start time anchored to the current `elapsed`. Stored in a
   // ref so resuming from pause doesn't restart the loop's anchor each render.
   const startedAtRef = useRef<number>(0)
+
+  // === Live-mode state ==================================================
+  const speech = useSpeechRecognition(toSpeechLang(lang))
 
   // If the language flips mid-playback, reset to a clean state — otherwise the
   // word array swaps under us and indices/timings drift.
@@ -188,8 +218,9 @@ export function VoiceMemo({
     setPlaying(false)
   }, [lang])
 
+  // rAF playback loop — only runs while sample mode is actively playing.
   useEffect(() => {
-    if (!playing) return
+    if (!playing || mode !== 'sample') return
     startedAtRef.current = performance.now() - elapsed
     let raf = 0
     const tick = (now: number) => {
@@ -204,32 +235,56 @@ export function VoiceMemo({
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-    // We deliberately omit `elapsed` from deps: it changes every frame and
-    // would re-run the effect (cancelling the loop) on every tick. The anchor
-    // captured at effect-start handles resume-from-pause correctly.
+    // `elapsed` deliberately excluded — it changes every frame and would
+    // cancel the loop on each tick. The anchor captured at effect-start
+    // handles resume-from-pause correctly.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, memo.duration])
+  }, [playing, memo.duration, mode])
 
   const finished = elapsed >= memo.duration
   const progress = Math.min(1, elapsed / memo.duration)
 
-  // Count of words spoken so far. Recomputed every frame, but cheap (n=23) and
-  // it's the cache key for the parser so the regex pass only runs when a new
-  // word appears, not on every animation tick.
+  // Count of words spoken so far. Recomputed every frame, but cheap (n=23).
   const visibleCount = countVisible(memo.words, elapsed)
-  const extracted = useMemo(() => {
-    const text = memo.words
-      .slice(0, visibleCount)
-      .map((w) => w.text)
-      .join(' ')
-    return parseTranscript(text, lang)
-  }, [memo, visibleCount, lang])
+
+  // Active text source: sample's revealed words, OR live's combined
+  // (finalized + interim) transcript. The parser doesn't know which.
+  const activeText = useMemo(() => {
+    if (mode === 'sample') {
+      return memo.words
+        .slice(0, visibleCount)
+        .map((w) => w.text)
+        .join(' ')
+    }
+    return speech.combinedText
+  }, [mode, memo.words, visibleCount, speech.combinedText])
+
+  const extracted = useMemo(
+    () => parseTranscript(activeText, lang),
+    [activeText, lang],
+  )
 
   // Mirror the parser's output to the parent so siblings can render off it.
   // Effect keeps render pure; the parent gets one update per memoized change.
   useEffect(() => {
     onExtractedChange?.(extracted)
   }, [extracted, onExtractedChange])
+
+  /** Switch input source. Resets the source we're leaving so re-entering it
+   *  starts from a clean state — otherwise the caught panel would carry
+   *  stale extracts across modes. */
+  const switchMode = (next: Mode) => {
+    if (next === mode) return
+    if (next === 'sample') {
+      // Leaving live → stop the recognition cleanly.
+      speech.reset()
+    } else {
+      // Leaving sample → freeze the player and rewind.
+      setPlaying(false)
+      setElapsed(0)
+    }
+    setMode(next)
+  }
 
   const onToggle = () => {
     if (finished) {
@@ -240,7 +295,40 @@ export function VoiceMemo({
     setPlaying((p) => !p)
   }
 
+  // Space toggles the active input source — sample play/pause when in sample
+  // mode, mic on/off when in live mode. Skipped when the user is typing in
+  // a real input (e.g. the login modal email field). preventDefault stops
+  // the page from scrolling on space, which matches media-player expectation.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' && e.key !== ' ') return
+      const t = e.target as HTMLElement | null
+      const tag = t?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || t?.isContentEditable) return
+      e.preventDefault()
+      if (mode === 'sample') {
+        onToggle()
+      } else if (speech.supported && speech.errorCode !== 'unsupported') {
+        if (speech.state === 'listening' || speech.state === 'starting') {
+          speech.stop()
+        } else if (speech.state === 'error') {
+          speech.reset()
+          speech.start()
+        } else {
+          speech.start()
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // Handlers use functional updaters / stable refs internally, so closure
+    // drift on `onToggle` / `speech.*` is benign here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finished, mode, speech.state, speech.supported, speech.errorCode])
+
   const buttonLabel = finished ? memo.labels.replay : playing ? memo.labels.pause : memo.labels.play
+
+  const liveUnsupported = !speech.supported
 
   return (
     <section className="memo" aria-label="voice memo">
@@ -249,6 +337,41 @@ export function VoiceMemo({
         <span className="memo__loc">{memo.labels.location}</span>
       </header>
 
+      {/* Input-source toggle — sample (curated) vs live (your voice). Live
+          stays clickable even when unsupported so the LiveRecorder can
+          render the explanation rather than silently disabling. */}
+      <div className="memo__mode" role="tablist" aria-label="input source">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'sample'}
+          className={`memo__mode-btn${mode === 'sample' ? ' memo__mode-btn--active' : ''}`}
+          onClick={() => switchMode('sample')}
+        >
+          <span className="memo__mode-dot memo__mode-dot--sample" aria-hidden="true" />
+          {memo.labels.modeSample}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'live'}
+          className={`memo__mode-btn memo__mode-btn--live${mode === 'live' ? ' memo__mode-btn--active' : ''}`}
+          onClick={() => switchMode('live')}
+        >
+          <span className="memo__mode-dot memo__mode-dot--live" aria-hidden="true" />
+          {memo.labels.modeLive}
+          {liveUnsupported && (
+            <span className="memo__mode-badge mono" aria-hidden="true">
+              {memo.labels.modeLiveUnsupportedBadge}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {mode === 'live' ? (
+        <LiveRecorder speech={speech} lang={lang} extracted={extracted} />
+      ) : (
+      <>
       <div className="memo__player">
         <button
           type="button"
@@ -261,6 +384,18 @@ export function VoiceMemo({
             {finished ? '↻' : playing ? '❚❚' : '▶'}
           </span>
         </button>
+        {/* Decorative EQ bars — animation only runs while `playing`, so paused
+            and finished states freeze them. Sells "real audio player" without
+            requiring an actual audio element. */}
+        <div
+          className={`memo__eq${playing ? ' memo__eq--playing' : ''}`}
+          aria-hidden="true"
+        >
+          <span className="memo__eq-bar" />
+          <span className="memo__eq-bar" />
+          <span className="memo__eq-bar" />
+          <span className="memo__eq-bar" />
+        </div>
         <div className="memo__bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
           <div className="memo__bar-fill" style={{ width: `${progress * 100}%` }} />
         </div>
@@ -269,33 +404,39 @@ export function VoiceMemo({
         </span>
       </div>
 
-      <p className="memo__hint">{memo.labels.hint}</p>
+      <div className="memo__hint-row">
+        <p className="memo__hint">{memo.labels.hint}</p>
+        <span className="memo__shortcut mono" aria-hidden="true">
+          <kbd className="memo__kbd">space</kbd>
+          <span className="memo__shortcut-label">{memo.labels.shortcutHint}</span>
+        </span>
+      </div>
 
       <div className="memo__transcript" aria-live="polite" aria-atomic="false">
         {memo.words.map((w, i) => {
           const visible = w.at <= elapsed
           const isLatest = visible && (i === memo.words.length - 1 || memo.words[i + 1].at > elapsed)
-          // Trailing space lives OUTSIDE the span as a sibling text node.
-          // Putting it inside `display: inline-block` spans makes browsers
-          // collapse the trailing whitespace, so the words ran together.
+          // Inline-block spans collapse adjacent whitespace text nodes, so
+          // spacing is enforced via `margin-right` in CSS instead of a sibling
+          // text node — survives both rendering and copy-paste.
           return (
-            <Fragment key={i}>
-              <span
-                className={[
-                  'memo__word',
-                  visible ? 'memo__word--visible' : '',
-                  isLatest && playing ? 'memo__word--latest' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-              >
-                {w.text}
-              </span>
-              {' '}
-            </Fragment>
+            <span
+              key={i}
+              className={[
+                'memo__word',
+                visible ? 'memo__word--visible' : '',
+                isLatest && playing ? 'memo__word--latest' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {w.text}
+            </span>
           )
         })}
       </div>
+      </>
+      )}
 
       <aside className="caught" aria-label={memo.labels.caughtTitle}>
         <header className="caught__head">
@@ -327,7 +468,7 @@ export function VoiceMemo({
                 <ul className="caught__materials">
                   {extracted.materials.map((m) => (
                     <li key={m} className="caught__material">
-                      {m}
+                      {MATERIAL_DISPLAY[lang][m] ?? m}
                     </li>
                   ))}
                 </ul>

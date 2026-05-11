@@ -12,9 +12,10 @@ const COPY = {
     nameLine2: 'Notes',
     tagline: 'Notes de truck → brouillon de facture le dimanche matin.',
     description:
-      'Cette révision : la note vocale, le parser, et le brouillon de facture, tous polis. Connexion client en haut, métrique note→facture, et le tout prêt à embarquer dans un vrai produit.',
+      'Révision finale : note vocale — échantillon scripté ou ta propre voix au micro — qui alimente un parser, qui remplit le brouillon de facture en direct. Connexion client, métrique, envoi/impression, tout prêt à intégrer dans un vrai produit.',
     metricAssembling: 'Construction du brouillon en cours…',
     metricReady: (sec: string) => `Note → facture · prête en ${sec} s`,
+    metricSaved: '≈ 45 min de moins qu’une saisie le dimanche soir',
     footerLeft: 'Sunday Night Dread · démo extraite',
     footerRight: 'rev 05 · prêt à expédier',
   },
@@ -24,9 +25,10 @@ const COPY = {
     nameLine2: 'Notes',
     tagline: 'Truck voice notes → draft invoice by Sunday morning.',
     description:
-      'This revision: the voice note, the parser, and the invoice draft, all polished. Client sign-in up top, note→invoice timing metric, and everything ready to drop into a real product.',
+      'Final revision: voice memo — scripted sample or your own voice via mic — feeds a parser that builds the invoice draft live. Sign-in, timing metric, send/print, all polished and ready to drop into a real product.',
     metricAssembling: 'Assembling the draft…',
     metricReady: (sec: string) => `Note → invoice · ready in ${sec} s`,
+    metricSaved: '≈ 45 min less than typing it Sunday night',
     footerLeft: 'Sunday Night Dread · extracted demo',
     footerRight: 'rev 05 · ship-ready',
   },
@@ -104,6 +106,7 @@ export function App() {
             completionAt={completionAt}
             assemblingLabel={t.metricAssembling}
             readyLabel={t.metricReady}
+            savedLabel={t.metricSaved}
             lang={lang}
           />
           <InvoiceDraft lang={lang} extracted={extracted} />
@@ -131,21 +134,25 @@ function Metric({
   completionAt,
   assemblingLabel,
   readyLabel,
+  savedLabel,
   lang,
 }: {
   firstDetectionAt: number | null
   completionAt: number | null
   assemblingLabel: string
   readyLabel: (sec: string) => string
+  savedLabel: string
   lang: Lang
 }) {
   if (firstDetectionAt === null) return null
 
   if (completionAt === null) {
     return (
-      <div className="metric metric--pending" role="status" aria-live="polite">
-        <span className="metric__dot" aria-hidden="true" />
-        <span>{assemblingLabel}</span>
+      <div className="metric-wrap">
+        <div className="metric metric--pending" role="status" aria-live="polite">
+          <span className="metric__dot" aria-hidden="true" />
+          <span>{assemblingLabel}</span>
+        </div>
       </div>
     )
   }
@@ -153,11 +160,14 @@ function Metric({
   const sec = ((completionAt - firstDetectionAt) / 1000).toFixed(1)
   const formatted = lang === 'fr' ? sec.replace('.', ',') : sec
   return (
-    <div className="metric metric--ready" role="status" aria-live="polite">
-      <span className="metric__check" aria-hidden="true">
-        ✓
-      </span>
-      <span>{readyLabel(formatted)}</span>
+    <div className="metric-wrap">
+      <div className="metric metric--ready" role="status" aria-live="polite">
+        <span className="metric__check" aria-hidden="true">
+          ✓
+        </span>
+        <span>{readyLabel(formatted)}</span>
+      </div>
+      <p className="metric__saved">{savedLabel}</p>
     </div>
   )
 }
